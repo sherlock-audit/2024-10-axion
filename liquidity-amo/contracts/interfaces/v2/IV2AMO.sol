@@ -1,13 +1,24 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-interface ISolidlyV2AMO {
+interface IV2AMO {
+    enum PoolType {
+        SOLIDLY_V2,
+        VELO_LIKE // Aerodrome, Velodrome
+    }
+
     /* ========== ROLES ========== */
     /// @notice Returns the identifier for the REWARD_COLLECTOR_ROLE
     /// @dev This role allows calling getReward()
     function REWARD_COLLECTOR_ROLE() external view returns (bytes32);
 
     /* ========== VARIABLES ========== */
+    /// @notice Returns the pool type
+    function poolType() external view returns (PoolType);
+
+    /// @notice Returns the address of the Solidly factory
+    function factory() external view returns (address);
+
     /// @notice Returns the address of the Solidly router
     function router() external view returns (address);
 

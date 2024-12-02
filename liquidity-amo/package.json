@@ -19,7 +19,7 @@
     "chai": "^4.2.0",
     "dotenv": "^16.4.5",
     "ethers": "^6.13.1",
-    "hardhat": "^2.22.6",
+    "hardhat": "^2.22.16",
     "hardhat-gas-reporter": "^1.0.8",
     "mcl-wasm": "^1.5.0",
     "prettier": "^3.3.3",
@@ -47,5 +47,8 @@
         }
       }
     ]
+  },
+  "dependencies": {
+    "@uniswap/v3-periphery": "github:Uniswap/v3-periphery#0.8"
   }
 }
