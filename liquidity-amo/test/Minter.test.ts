@@ -1,14 +1,15 @@
 import { ethers, upgrades } from "hardhat";
 import { expect } from "chai";
-import { Minter, BOOSTStablecoin, MockERC20, MockMinterCaller } from "../typechain-types"; // Adjust the import paths according to your setup
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { ContractFactory } from "ethers";
+import { Minter, BoostStablecoin, MockERC20, MockMinterCaller } from "../typechain-types"; // Adjust the import paths according to your setup
+import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 
 describe("Minter Contract Tests", function() {
-  let MockERC20Contract: ethers.ContractFactory;
+  let MockERC20Contract: ContractFactory;
 
   let minterContract: Minter;
   let collateralToken: MockERC20;
-  let boostToken: BOOSTStablecoin;
+  let boostToken: BoostStablecoin;
   let minterCallerWithMinterRole: MockMinterCaller;
   let minterCallerWithAmoRole: MockMinterCaller;
   let minterCaller: MockMinterCaller;
@@ -36,11 +37,13 @@ describe("Minter Contract Tests", function() {
 
     // Deploy the mock ERC20 token for collateral
     MockERC20Contract = await ethers.getContractFactory("MockERC20");
-    collateralToken = await MockERC20Contract.deploy("Collateral Token", "COL", 6);
+    collateralToken = (await MockERC20Contract.deploy("Collateral Token", "COL", 6)) as MockERC20;
     await collateralToken.waitForDeployment();
     // Deploy the BOOSTStablecoin contract
     const BOOSTStablecoin = await ethers.getContractFactory("BoostStablecoin", owner);
-    boostToken = await upgrades.deployProxy(BOOSTStablecoin, [admin.address], { initializer: "initialize" });
+    boostToken = (
+      await upgrades.deployProxy(BOOSTStablecoin, [admin.address], { initializer: "initialize" })
+    ) as unknown as BoostStablecoin;
     await boostToken.waitForDeployment();
 
     // Deploy the Minter contract
@@ -49,7 +52,7 @@ describe("Minter Contract Tests", function() {
       await boostToken.getAddress(),
       await collateralToken.getAddress(),
       treasury.address
-    ], { initializer: "initialize" }));
+    ], { initializer: "initialize" })) as unknown as Minter;
     await minterContract.waitForDeployment();
 
     // Deploy the ExternalCaller contract
@@ -209,7 +212,7 @@ describe("Minter Contract Tests", function() {
 
   describe("Withdraw", function() {
     it("Should allow withdrawer to withdraw token", async function() {
-      const newToken = await MockERC20Contract.deploy("New Token", "Token", 6);
+      const newToken = (await MockERC20Contract.deploy("New Token", "Token", 6)) as MockERC20;
       await newToken.waitForDeployment();
 
       const mintAmount = ethers.parseUnits("100", 6);
@@ -222,7 +225,7 @@ describe("Minter Contract Tests", function() {
     });
 
     it("Should not allow others to withdraw token", async function() {
-      const newToken = await MockERC20Contract.deploy("New Token", "Token", 6);
+      const newToken = (await MockERC20Contract.deploy("New Token", "Token", 6)) as MockERC20;
       await newToken.waitForDeployment();
 
       const mintAmount = ethers.parseUnits("100", 6);

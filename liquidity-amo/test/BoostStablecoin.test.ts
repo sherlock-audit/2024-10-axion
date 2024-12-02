@@ -1,10 +1,10 @@
 import { ethers, upgrades } from "hardhat";
 import { expect } from "chai";
-import { BOOSTStablecoin } from "../typechain-types";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { BoostStablecoin } from "../typechain-types";
+import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 
 describe("BOOSTStablecoin Tests", function() {
-  let boostStablecoin: BOOSTStablecoin;
+  let boostStablecoin: BoostStablecoin;
   let admin: SignerWithAddress;
   let pauser: SignerWithAddress;
   let unpauser: SignerWithAddress;
@@ -19,7 +19,7 @@ describe("BOOSTStablecoin Tests", function() {
 
     // Deploy the BOOSTStablecoin contract
     const BOOSTStablecoin = await ethers.getContractFactory("BoostStablecoin", admin);
-    boostStablecoin = (await upgrades.deployProxy(BOOSTStablecoin, [admin.address], { initializer: "initialize" })) as BOOSTStablecoin;
+    boostStablecoin = (await upgrades.deployProxy(BOOSTStablecoin, [admin.address], { initializer: "initialize" })) as unknown as BoostStablecoin;
     await boostStablecoin.waitForDeployment();
 
     pauserRole = await boostStablecoin.PAUSER_ROLE();

@@ -77,16 +77,10 @@ interface IMasterAMO {
      * @notice This function mints BOOST tokens and sells them for USD
      * @dev Can only be called by an account with the AMO_ROLE when the contract is not paused
      * @param boostAmount The amount of BOOST tokens to be minted and sold
-     * @param minUsdAmountOut The minimum USD amount should be received following the swap
-     * @param deadline Timestamp representing the deadline for the operation to be executed
      * @return boostAmountIn The BOOST amount that sent to the pool for the swap
      * @return usdAmountOut The USD amount that received from the swap
      */
-    function mintAndSellBoost(
-        uint256 boostAmount,
-        uint256 minUsdAmountOut,
-        uint256 deadline
-    ) external returns (uint256 boostAmountIn, uint256 usdAmountOut);
+    function mintAndSellBoost(uint256 boostAmount) external returns (uint256 boostAmountIn, uint256 usdAmountOut);
 
     /**
      * @notice This function adds liquidity to the BOOST-USD pool
@@ -94,7 +88,6 @@ interface IMasterAMO {
      * @param usdAmount The amount of USD to be added as liquidity
      * @param minBoostSpend The minimum amount of BOOST that must be added to the pool
      * @param minUsdSpend The minimum amount of USD that must be added to the pool
-     * @param deadline Timestamp representing the deadline for the operation to be executed
      * @return boostSpent The BOOST amount that is spent in add liquidity
      * @return usdSpent The USD amount that is spent in add liquidity
      * @return liquidity The liquidity Amount that received from add liquidity
@@ -102,18 +95,15 @@ interface IMasterAMO {
     function addLiquidity(
         uint256 usdAmount,
         uint256 minBoostSpend,
-        uint256 minUsdSpend,
-        uint256 deadline
+        uint256 minUsdSpend
     ) external returns (uint256 boostSpent, uint256 usdSpent, uint256 liquidity);
 
     /**
      * @notice This function rebalances the BOOST-USD pool by Calling mintAndSellBoost() and addLiquidity()
      * @dev Can only be called by an account with the AMO_ROLE when the contract is not paused
      * @param boostAmount The amount of BOOST tokens to be minted and sold
-     * @param minUsdAmountOut The minimum USD amount should be received following the swap
      * @param minBoostSpend The minimum amount of BOOST that must be added to the pool
      * @param minUsdSpend The minimum amount of USD that must be added to the pool
-     * @param deadline Timestamp representing the deadline for the operation to be executed
      * @return boostAmountIn The BOOST amount that sent to the pool for the swap
      * @return usdAmountOut The USD amount that received from the swap
      * @return boostSpent The BOOST amount that is spent in add liquidity
@@ -122,10 +112,8 @@ interface IMasterAMO {
      */
     function mintSellFarm(
         uint256 boostAmount,
-        uint256 minUsdAmountOut,
         uint256 minBoostSpend,
-        uint256 minUsdSpend,
-        uint256 deadline
+        uint256 minUsdSpend
     )
         external
         returns (uint256 boostAmountIn, uint256 usdAmountOut, uint256 boostSpent, uint256 usdSpent, uint256 liquidity);
@@ -136,8 +124,6 @@ interface IMasterAMO {
      * @param liquidity The amount of liquidity tokens to be removed from the pool
      * @param minBoostRemove The minimum amount of BOOST tokens that must be removed from the pool
      * @param minUsdRemove The minimum amount of USD tokens that must be removed from the pool
-     * @param minBoostAmountOut The minimum BOOST amount should be received following the swap
-     * @param deadline Timestamp representing the deadline for the operation to be executed
      * @return boostRemoved The BOOST amount that received from remove liquidity
      * @return usdRemoved The USD amount that received from remove liquidity
      * @return usdAmountIn The USD amount that sent to the pool for the swap
@@ -146,9 +132,7 @@ interface IMasterAMO {
     function unfarmBuyBurn(
         uint256 liquidity,
         uint256 minBoostRemove,
-        uint256 minUsdRemove,
-        uint256 minBoostAmountOut,
-        uint256 deadline
+        uint256 minUsdRemove
     ) external returns (uint256 boostRemoved, uint256 usdRemoved, uint256 usdAmountIn, uint256 boostAmountOut);
 
     /**
