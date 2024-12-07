@@ -1,0 +1,220 @@
+diff a/liquidity-amo/test/Minter.test.ts b/liquidity-amo/test/Minter.test.ts	(rejected hunks)
+@@ -1,14 +1,20 @@
+ import { ethers, upgrades } from "hardhat";
+ import { expect } from "chai";
+-import { Minter, BOOSTStablecoin, MockERC20, MockMinterCaller } from "../typechain-types"; // Adjust the import paths according to your setup
+-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+-
+-describe("Minter Contract Tests", function() {
+-  let MockERC20Contract: ethers.ContractFactory;
++import { ContractFactory } from "ethers";
++import {
++  Minter,
++  BoostStablecoin,
++  MockERC20,
++  MockMinterCaller,
++} from "../typechain-types"; // Adjust the import paths according to your setup
++import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
++
++describe("Minter Contract Tests", function () {
++  let MockERC20Contract: ContractFactory;
+ 
+   let minterContract: Minter;
+   let collateralToken: MockERC20;
+-  let boostToken: BOOSTStablecoin;
++  let boostToken: BoostStablecoin;
+   let minterCallerWithMinterRole: MockMinterCaller;
+   let minterCallerWithAmoRole: MockMinterCaller;
+   let minterCaller: MockMinterCaller;
+@@ -30,35 +36,71 @@ describe("Minter Contract Tests", function() {
+   let AMORole: any;
+   let withdrawTokenRole: any;
+ 
+-  beforeEach(async function() {
++  beforeEach(async function () {
+     // Get signers
+-    [owner, admin, treasury, pauser, unpauser, minterAddress, amo, withdrawer, user] = await ethers.getSigners();
++    [
++      owner,
++      admin,
++      treasury,
++      pauser,
++      unpauser,
++      minterAddress,
++      amo,
++      withdrawer,
++      user,
++    ] = await ethers.getSigners();
+ 
+     // Deploy the mock ERC20 token for collateral
+     MockERC20Contract = await ethers.getContractFactory("MockERC20");
+-    collateralToken = await MockERC20Contract.deploy("Collateral Token", "COL", 6);
++    collateralToken = (await MockERC20Contract.deploy(
++      "Collateral Token",
++      "COL",
++      6,
++    )) as MockERC20;
+     await collateralToken.waitForDeployment();
+     // Deploy the BOOSTStablecoin contract
+-    const BOOSTStablecoin = await ethers.getContractFactory("BoostStablecoin", owner);
+-    boostToken = await upgrades.deployProxy(BOOSTStablecoin, [admin.address], { initializer: "initialize" });
++    const BOOSTStablecoin = await ethers.getContractFactory(
++      "BoostStablecoin",
++      owner,
++    );
++    boostToken = (await upgrades.deployProxy(BOOSTStablecoin, [admin.address], {
++      initializer: "initialize",
++    })) as unknown as BoostStablecoin;
+     await boostToken.waitForDeployment();
+ 
+     // Deploy the Minter contract
+     const Minter = await ethers.getContractFactory("Minter", owner);
+-    minterContract = (await upgrades.deployProxy(Minter, [
+-      await boostToken.getAddress(),
+-      await collateralToken.getAddress(),
+-      treasury.address
+-    ], { initializer: "initialize" }));
++    minterContract = (await upgrades.deployProxy(
++      Minter,
++      [
++        await boostToken.getAddress(),
++        await collateralToken.getAddress(),
++        treasury.address,
++      ],
++      { initializer: "initialize" },
++    )) as unknown as Minter;
+     await minterContract.waitForDeployment();
+ 
+     // Deploy the ExternalCaller contract
+-    const TestMinterCaller = await ethers.getContractFactory("MockMinterCaller");
+-    minterCaller = await TestMinterCaller.deploy(await minterContract.getAddress(), await boostToken.getAddress(), await collateralToken.getAddress());
++    const TestMinterCaller =
++      await ethers.getContractFactory("MockMinterCaller");
++    minterCaller = await TestMinterCaller.deploy(
++      await minterContract.getAddress(),
++      await boostToken.getAddress(),
++      await collateralToken.getAddress(),
++    );
+     await minterCaller.waitForDeployment();
+-    minterCallerWithMinterRole = await TestMinterCaller.deploy(await minterContract.getAddress(), await boostToken.getAddress(), await collateralToken.getAddress());
++    minterCallerWithMinterRole = await TestMinterCaller.deploy(
++      await minterContract.getAddress(),
++      await boostToken.getAddress(),
++      await collateralToken.getAddress(),
++    );
+     await minterCallerWithMinterRole.waitForDeployment();
+-    minterCallerWithAmoRole = await TestMinterCaller.deploy(await minterContract.getAddress(), await boostToken.getAddress(), await collateralToken.getAddress());
++    minterCallerWithAmoRole = await TestMinterCaller.deploy(
++      await minterContract.getAddress(),
++      await boostToken.getAddress(),
++      await collateralToken.getAddress(),
++    );
+     await minterCallerWithAmoRole.waitForDeployment();
+ 
+     pauserRole = await minterContract.PAUSER_ROLE();
+@@ -207,48 +335,87 @@ describe("Minter Contract Tests", function() {
+     });
+   });
+ 
+-  describe("Withdraw", function() {
+-    it("Should allow withdrawer to withdraw token", async function() {
+-      const newToken = await MockERC20Contract.deploy("New Token", "Token", 6);
++  describe("Withdraw", function () {
++    it("Should allow withdrawer to withdraw token", async function () {
++      const newToken = (await MockERC20Contract.deploy(
++        "New Token",
++        "Token",
++        6,
++      )) as MockERC20;
+       await newToken.waitForDeployment();
+ 
+       const mintAmount = ethers.parseUnits("100", 6);
+       await newToken.mint(minterContract.getAddress(), mintAmount);
+-      expect(await newToken.balanceOf(minterContract.getAddress())).to.be.equal(mintAmount);
++      expect(await newToken.balanceOf(minterContract.getAddress())).to.be.equal(
++        mintAmount,
++      );
+ 
+       expect(await newToken.balanceOf(treasury.address)).to.be.equal(0);
+-      await minterContract.connect(withdrawer).withdrawToken(newToken.getAddress(), mintAmount);
+-      expect(await newToken.balanceOf(treasury.address)).to.be.equal(mintAmount);
++      await minterContract
++        .connect(withdrawer)
++        .withdrawToken(newToken.getAddress(), mintAmount);
++      expect(await newToken.balanceOf(treasury.address)).to.be.equal(
++        mintAmount,
++      );
+     });
+ 
+-    it("Should not allow others to withdraw token", async function() {
+-      const newToken = await MockERC20Contract.deploy("New Token", "Token", 6);
++    it("Should not allow others to withdraw token", async function () {
++      const newToken = (await MockERC20Contract.deploy(
++        "New Token",
++        "Token",
++        6,
++      )) as MockERC20;
+       await newToken.waitForDeployment();
+ 
+       const mintAmount = ethers.parseUnits("100", 6);
+       await newToken.mint(minterContract.getAddress(), mintAmount);
+-      expect(await newToken.balanceOf(minterContract.getAddress())).to.be.equal(mintAmount);
++      expect(await newToken.balanceOf(minterContract.getAddress())).to.be.equal(
++        mintAmount,
++      );
+       expect(await newToken.balanceOf(treasury.address)).to.be.equal(0);
+ 
+       let reverteMessage = `AccessControl: account ${owner.address.toLowerCase()} is missing role ${withdrawTokenRole}`;
+-      await expect(minterContract.connect(owner).withdrawToken(newToken.getAddress(), mintAmount)).to.be.revertedWith(reverteMessage);
++      await expect(
++        minterContract
++          .connect(owner)
++          .withdrawToken(newToken.getAddress(), mintAmount),
++      ).to.be.revertedWith(reverteMessage);
+ 
+       reverteMessage = `AccessControl: account ${admin.address.toLowerCase()} is missing role ${withdrawTokenRole}`;
+-      await expect(minterContract.connect(admin).withdrawToken(newToken.getAddress(), mintAmount)).to.be.revertedWith(reverteMessage);
++      await expect(
++        minterContract
++          .connect(admin)
++          .withdrawToken(newToken.getAddress(), mintAmount),
++      ).to.be.revertedWith(reverteMessage);
+ 
+       reverteMessage = `AccessControl: account ${pauser.address.toLowerCase()} is missing role ${withdrawTokenRole}`;
+-      await expect(minterContract.connect(pauser).withdrawToken(newToken.getAddress(), mintAmount)).to.be.revertedWith(reverteMessage);
++      await expect(
++        minterContract
++          .connect(pauser)
++          .withdrawToken(newToken.getAddress(), mintAmount),
++      ).to.be.revertedWith(reverteMessage);
+ 
+       reverteMessage = `AccessControl: account ${unpauser.address.toLowerCase()} is missing role ${withdrawTokenRole}`;
+-      await expect(minterContract.connect(unpauser).withdrawToken(newToken.getAddress(), mintAmount)).to.be.revertedWith(reverteMessage);
++      await expect(
++        minterContract
++          .connect(unpauser)
++          .withdrawToken(newToken.getAddress(), mintAmount),
++      ).to.be.revertedWith(reverteMessage);
+ 
+       reverteMessage = `AccessControl: account ${amo.address.toLowerCase()} is missing role ${withdrawTokenRole}`;
+-      await expect(minterContract.connect(amo).withdrawToken(newToken.getAddress(), mintAmount)).to.be.revertedWith(reverteMessage);
++      await expect(
++        minterContract
++          .connect(amo)
++          .withdrawToken(newToken.getAddress(), mintAmount),
++      ).to.be.revertedWith(reverteMessage);
+ 
+       reverteMessage = `AccessControl: account ${user.address.toLowerCase()} is missing role ${withdrawTokenRole}`;
+-      await expect(minterContract.connect(user).withdrawToken(newToken.getAddress(), mintAmount)).to.be.revertedWith(reverteMessage);
++      await expect(
++        minterContract
++          .connect(user)
++          .withdrawToken(newToken.getAddress(), mintAmount),
++      ).to.be.revertedWith(reverteMessage);
+       expect(await newToken.balanceOf(treasury.address)).to.be.equal(0);
+     });
+   });
+-
+-});
+\ No newline at end of file
++});

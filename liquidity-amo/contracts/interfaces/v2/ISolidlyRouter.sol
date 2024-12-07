@@ -42,4 +42,6 @@ interface ISolidlyRouter {
         address to,
         uint256 deadline
     ) external returns (uint256[] memory amounts);
+
+    function getAmountsOut(uint256 amountIn, route[] memory routes) external view returns (uint256[] memory amounts);
 }

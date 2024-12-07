@@ -1,0 +1,39 @@
+diff a/liquidity-amo/test/BoostStablecoin.test.ts b/liquidity-amo/test/BoostStablecoin.test.ts	(rejected hunks)
+@@ -1,10 +1,10 @@
+ import { ethers, upgrades } from "hardhat";
+ import { expect } from "chai";
+-import { BOOSTStablecoin } from "../typechain-types";
+-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
++import { BoostStablecoin } from "../typechain-types";
++import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
+ 
+-describe("BOOSTStablecoin Tests", function() {
+-  let boostStablecoin: BOOSTStablecoin;
++describe("BOOSTStablecoin Tests", function () {
++  let boostStablecoin: BoostStablecoin;
+   let admin: SignerWithAddress;
+   let pauser: SignerWithAddress;
+   let unpauser: SignerWithAddress;
+@@ -14,12 +14,19 @@ describe("BOOSTStablecoin Tests", function() {
+   let pauserRole: any, unpauserRole: any, minterRole: any;
+   const mintAmount = ethers.parseEther("100");
+ 
+-  beforeEach(async function() {
++  beforeEach(async function () {
+     [admin, pauser, unpauser, minter, user1, user2] = await ethers.getSigners();
+ 
+     // Deploy the BOOSTStablecoin contract
+-    const BOOSTStablecoin = await ethers.getContractFactory("BoostStablecoin", admin);
+-    boostStablecoin = (await upgrades.deployProxy(BOOSTStablecoin, [admin.address], { initializer: "initialize" })) as BOOSTStablecoin;
++    const BOOSTStablecoin = await ethers.getContractFactory(
++      "BoostStablecoin",
++      admin,
++    );
++    boostStablecoin = (await upgrades.deployProxy(
++      BOOSTStablecoin,
++      [admin.address],
++      { initializer: "initialize" },
++    )) as unknown as BoostStablecoin;
+     await boostStablecoin.waitForDeployment();
+ 
+     pauserRole = await boostStablecoin.PAUSER_ROLE();

@@ -1,0 +1,79 @@
+diff a/liquidity-amo/README.md b/liquidity-amo/README.md	(rejected hunks)
+@@ -2,8 +2,8 @@
+ 
+ ## Organization
+ The AMO manages a significant portion of the USDC backing for the stablecoin (referred to as BOOST in this version). There are two functions:
+-* solidlyv3liquidityamo.sol For SolidlyV3 Dexes (based on Uniswap v3 contracts).
+-* solidlyv2liquidityamo.sol For SolidlyV2 Dexes (based on Uniswap v2 contracts).
++* v3AMO.sol For ve33 Dexes/pools based on CLAMM (Uniswap v3 and algebra contracts).
++* v2AMO.sol For ve33 Dexes based on Uniswap v2 contracts.
+ 
+ *Note 1:* These two functions have identical logic, they just interact with two different AMM contracts => similarity qualitatively over 90% 
+ 
+@@ -12,13 +12,13 @@ The AMO manages a significant portion of the USDC backing for the stablecoin (re
+ 
+ ## Audit Scope
+ 
+-* Both the v2 and v3 AMO logic.
++* Both the v2AMO and v3AMO logic.
+ * The utils contract (which manages veNFT, our voting power in Dexes) on the other branch.
+-* Interfaces: note that some interfaces are external and do not need to be audited: 
+-    + v2: IGauge.sol, IPair.sol, ISolidityRouter.sol
+-    + v3: IsolidityV3Factory.sol, ISolidityv3Pool.sol
++* Interfaces: note that some interfaces are external and do not need to be audited, typically: 
++    + v2AMO: IGauge.sol, IPair.sol, [Dexname]_Router.sol
++    + v3AMO: [Dexname]_Factory.sol, [Dexname]_Pool.sol
+ 
+-*Note*: Each Solidly Dex has slightly different contract versions, meaning adaptations for each chain or Dex may be required. This could lead to later ad-hoc reviews by an auditor.
++*Note*: Each ve33 Dex has slightly different contract versions, meaning adaptations for each chain or Dex may be required. This could lead to later ad-hoc reviews by an auditor.
+ 
+ ## Running the project
+ This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a script that deploys that contract.
+@@ -46,7 +46,7 @@ Token Transfer Guard: This ensures that token transfers are only allowed when th
+ 
+ ## II) LiquidityAMO:
+ The LiquidityAMO smart contract is designed for a dual purpose:
+-* it maintains the BOOST peg to USD in Solidly pool.
++* it maintains the BOOST peg to USD in ve33 pool.
+ * It provides protocol-owned liquidity to the pools 
+ 
+ This joint operation involves
+@@ -60,7 +60,7 @@ This joint operation involves
+ Below are the key functions that define the core logic of the contract:
+ **Main Functions:**
+ ### 1. Initialize
+-Purpose: The initialize function sets up the Liquidity AMO contract, defining the addresses of BOOST, USD, Minter, Solidly Pool and Treasury. Typically called when the contract is first deployed, this replaces a constructor in upgradeable contracts.
++Purpose: The initialize function sets up the Liquidity AMO contract, defining the addresses of BOOST, USD, Minter, Dex Pool and Treasury. Typically called when the contract is first deployed, this replaces a constructor in upgradeable contracts.
+ ### 2. setVault Function
+ This function sets or changes the treasury vault address. Only an account with the SETTER_ROLE can call it.
+ ### 3. setTickBounds
+@@ -80,9 +80,9 @@ Triggered: When the BOOST-USD price diverges from peg (e.g., BOOST is trading ab
+ 	usdAmountOut: The USD amount that received from the swap
+ Logic and economic security: the function reverts if Boost is not sold above par, so this function can never induce a loss for the protocol.
+ 
+-### 5. addLiquidity (solidly v3) and addLiquidityAndDeposit (solidly v2)
++### 5. addLiquidity ( v3AMO.sol ) and addLiquidityAndDeposit  v2AMO.sol )
+ 
+-**Purpose (brief):** These addLiquidity functions add protocol-owned liquidity to the BOOST-USD pool, with minor implementation changes between the Solidly v3 (which “mints” positions) and Solidly v2 (which adds liquidity and stakes it).
++**Purpose (brief):** These addLiquidity functions add protocol-owned liquidity to the BOOST-USD pool, with minor implementation changes between the v3AMO (which “mints” positions) and v2AMO (which adds liquidity and stakes it).
+ It involves free-minting BOOST tokens, pairing it with USDC backing, and after approving both BOOST and USD tokens for transfer to the pool, ading them as liquidity.
+ 
+ **Purpose (detailed)**: 
+@@ -113,7 +113,7 @@ First it removes protocol owned liquidity, swaps the USD for Boost, then burns t
+ 
+ **Purpose (detailed):** 
+ * The function first checks the available liquidity using the position() function and ensures the requested liquidity removal does not exceed the protocol's allowed limits (liquidityAmountLimit).
+-* The function removes liquidity using the appropriate underlying pool logic: it calls burnAndCollect() in solidly v3, and withdraw() and removeLiquidity() in Solidly v2.
++* The function removes liquidity using the appropriate underlying pool logic: it calls burnAndCollect() in v3AMO.sol, and withdraw() and removeLiquidity() in v2AMO.sol.
+ * The function reverts if BOOST amount withdrawn is lesser than USDC amount, as BOOST pool implied price would not be below peg.
+ * Once liquidity is removed, the function swaps the USD tokens for BOOST tokens in the pool. The swap ensures that at least minBoostAmountOut BOOST is received.
+ * The BOOST tokens received from removing liquidity and swapping USD are burned to reduce the circulating supply of BOOST. 
+@@ -123,7 +123,7 @@ First it removes protocol owned liquidity, swaps the USD for Boost, then burns t
+ * usdRemoved (uint256): The amount of USD tokens removed from the liquidity pool.
+ * boostAmountOut (uint256): The amount of BOOST tokens received from swapping USD tokens.
+ 
+-**Parameters (for Solidly v3)**:
++**Parameters (for v3AMO.sol)**:
+ * liquidity (uint256): The amount of liquidity tokens to be removed from the BOOST-USD pool.
+ * minBoostRemove (uint256): The minimum amount of BOOST tokens that should be removed from the pool when liquidity is withdrawn.
+ * minUsdRemove (uint256): The minimum amount of USD tokens that should be removed from the pool when liquidity is withdrawn.
