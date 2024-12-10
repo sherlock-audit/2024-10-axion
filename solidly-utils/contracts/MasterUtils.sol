@@ -144,7 +144,7 @@ contract MasterUtils is AccessControlEnumerableUpgradeable, ReentrancyGuardUpgra
         for (uint i = 0; i < bribes.length; i++) {
             if (amounts[i] > bribeAmountLimit[bribes[i]])
                 revert BribeAmountLimitExceeded({bribeAmount: amounts[i], limitAmount: bribeAmountLimit[bribes[i]]});
-            IERC20(rewards[i]).approve(bribes[i], amounts[i]);
+            IERC20(rewards[i]).forceApprove(bribes[i], amounts[i]);
             IBribe(bribes[i]).notifyRewardAmount(rewards[i], amounts[i]);
         }
 
