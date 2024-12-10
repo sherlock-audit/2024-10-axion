@@ -8,6 +8,8 @@ interface IGauge {
 
     function withdraw(uint256 amount) external;
 
+    function getReward(address _account) external;
+
     function getReward(address account, address[] memory tokens) external;
 
     function getReward(uint256 tokenId) external;

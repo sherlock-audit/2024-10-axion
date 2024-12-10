@@ -1,0 +1,8 @@
+diff a/liquidity-amo/contracts/interfaces/v2/ISolidlyRouter.sol b/liquidity-amo/contracts/interfaces/v2/ISolidlyRouter.sol	(rejected hunks)
+@@ -42,4 +42,6 @@ interface ISolidlyRouter {
+         address to,
+         uint256 deadline
+     ) external returns (uint256[] memory amounts);
++
++    function getAmountsOut(uint256 amountIn, route[] memory routes) external view returns (uint256[] memory amounts);
+ }

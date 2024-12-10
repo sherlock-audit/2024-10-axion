@@ -101,7 +101,7 @@ abstract contract MasterAMO is
         // On each chain where Boost is deployed, there will be a stable Boost-USD pool ensuring BOOST's peg.
         // Multiple Boost-USD pools can exist across different DEXes on the same chain, each with its own AMO, maintaining independent peg guarantees.
         address boostMinter_ // the minter contract
-    ) public initializer {
+    ) public onlyInitializing {
         __AccessControlEnumerable_init();
         __Pausable_init();
         // Ensure no zero addresses are passed to critical parameters
@@ -144,18 +144,12 @@ abstract contract MasterAMO is
      * Implementation: the actions to maintain peg ( I and II ) can be triggered permissionlessly
      */
     function _mintAndSellBoost(
-        uint256 boostAmount,
-        uint256 minUsdAmountOut, //  boost is only sold over peg ( checked performed whatever minUsdAmountOut is inputted to this function —— this variable can sometimes be omited )
-        // the price check is always performed in the implementation contracts
-        // ( this gives more flexibility to the function actually used)
-        uint256 deadline
+        uint256 boostAmount
     ) internal virtual returns (uint256 boostAmountIn, uint256 usdAmountOut);
 
     /// @inheritdoc IMasterAMO
     function mintAndSellBoost(
-        uint256 boostAmount,
-        uint256 minUsdAmountOut,
-        uint256 deadline
+        uint256 boostAmount
     )
         external
         override
@@ -164,22 +158,20 @@ abstract contract MasterAMO is
         nonReentrant
         returns (uint256 boostAmountIn, uint256 usdAmountOut)
     {
-        (boostAmountIn, usdAmountOut) = _mintAndSellBoost(boostAmount, minUsdAmountOut, deadline);
+        (boostAmountIn, usdAmountOut) = _mintAndSellBoost(boostAmount);
     }
 
     function _addLiquidity(
         uint256 usdAmount,
         uint256 minBoostSpend,
-        uint256 minUsdSpend,
-        uint256 deadline
+        uint256 minUsdSpend
     ) internal virtual returns (uint256 boostSpent, uint256 usdSpent, uint256 liquidity);
 
     /// @inheritdoc IMasterAMO
     function addLiquidity(
         uint256 usdAmount,
         uint256 minBoostSpend,
-        uint256 minUsdSpend,
-        uint256 deadline
+        uint256 minUsdSpend
     )
         external
         override
@@ -188,7 +180,7 @@ abstract contract MasterAMO is
         nonReentrant
         returns (uint256 boostSpent, uint256 usdSpent, uint256 liquidity)
     {
-        (boostSpent, usdSpent, liquidity) = _addLiquidity(usdAmount, minBoostSpend, minUsdSpend, deadline);
+        (boostSpent, usdSpent, liquidity) = _addLiquidity(usdAmount, minBoostSpend, minUsdSpend);
     }
 
     /**
@@ -198,30 +190,26 @@ abstract contract MasterAMO is
      */
     function _mintSellFarm(
         uint256 boostAmount,
-        uint256 minUsdAmountOut,
         uint256 minBoostSpend,
-        uint256 minUsdSpend,
-        uint256 deadline
+        uint256 minUsdSpend
     )
         internal
         returns (uint256 boostAmountIn, uint256 usdAmountOut, uint256 boostSpent, uint256 usdSpent, uint256 liquidity)
     {
-        (boostAmountIn, usdAmountOut) = _mintAndSellBoost(boostAmount, minUsdAmountOut, deadline);
+        (boostAmountIn, usdAmountOut) = _mintAndSellBoost(boostAmount);
 
         uint256 price = boostPrice();
         if (price > FACTOR - validRangeWidth && price < FACTOR + validRangeWidth) {
             uint256 usdBalance = IERC20Upgradeable(usd).balanceOf(address(this));
-            (boostSpent, usdSpent, liquidity) = _addLiquidity(usdBalance, minBoostSpend, minUsdSpend, deadline);
+            (boostSpent, usdSpent, liquidity) = _addLiquidity(usdBalance, minBoostSpend, minUsdSpend);
         }
     }
 
     /// @inheritdoc IMasterAMO
     function mintSellFarm(
         uint256 boostAmount,
-        uint256 minUsdAmountOut,
         uint256 minBoostSpend,
-        uint256 minUsdSpend,
-        uint256 deadline
+        uint256 minUsdSpend
     )
         external
         override
@@ -232,28 +220,22 @@ abstract contract MasterAMO is
     {
         (boostAmountIn, usdAmountOut, boostSpent, usdSpent, liquidity) = _mintSellFarm(
             boostAmount,
-            minUsdAmountOut,
             minBoostSpend,
-            minUsdSpend,
-            deadline
+            minUsdSpend
         );
     }
 
     function _unfarmBuyBurn(
         uint256 liquidity,
         uint256 minBoostRemove,
-        uint256 minUsdRemove,
-        uint256 minBoostAmountOut,
-        uint256 deadline
+        uint256 minUsdRemove
     ) internal virtual returns (uint256 boostRemoved, uint256 usdRemoved, uint256 usdAmountIn, uint256 boostAmountOut);
 
     /// @inheritdoc IMasterAMO
     function unfarmBuyBurn(
         uint256 liquidity,
         uint256 minBoostRemove,
-        uint256 minUsdRemove,
-        uint256 minBoostAmountOut,
-        uint256 deadline
+        uint256 minUsdRemove
     )
         external
         override
@@ -265,9 +247,7 @@ abstract contract MasterAMO is
         (boostRemoved, usdRemoved, usdAmountIn, boostAmountOut) = _unfarmBuyBurn(
             liquidity,
             minBoostRemove,
-            minUsdRemove,
-            minBoostAmountOut,
-            deadline
+            minUsdRemove
         );
     }
 
@@ -339,6 +319,51 @@ abstract contract MasterAMO is
 
     function balanceOfToken(address token) internal view returns (uint256) {
         return IERC20Upgradeable(token).balanceOf(address(this));
+    }
+
+    // Binary Search Square Root
+    function sqrt(uint256 x) internal pure returns (uint256) {
+        if (x == 0) return 0;
+        else {
+            uint256 xx = x;
+            uint256 r = 1;
+            if (xx >= 0x100000000000000000000000000000000) {
+                xx >>= 128;
+                r <<= 64;
+            }
+            if (xx >= 0x10000000000000000) {
+                xx >>= 64;
+                r <<= 32;
+            }
+            if (xx >= 0x100000000) {
+                xx >>= 32;
+                r <<= 16;
+            }
+            if (xx >= 0x10000) {
+                xx >>= 16;
+                r <<= 8;
+            }
+            if (xx >= 0x100) {
+                xx >>= 8;
+                r <<= 4;
+            }
+            if (xx >= 0x10) {
+                xx >>= 4;
+                r <<= 2;
+            }
+            if (xx >= 0x8) {
+                r <<= 1;
+            }
+            r = (r + x / r) >> 1;
+            r = (r + x / r) >> 1;
+            r = (r + x / r) >> 1;
+            r = (r + x / r) >> 1;
+            r = (r + x / r) >> 1;
+            r = (r + x / r) >> 1;
+            r = (r + x / r) >> 1;
+            uint256 r1 = x / r;
+            return r < r1 ? r : r1;
+        }
     }
 
     ////////////////////////// VIEW FUNCTIONS //////////////////////////
