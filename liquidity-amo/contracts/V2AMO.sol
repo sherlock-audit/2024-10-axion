@@ -5,9 +5,9 @@ import "./MasterAMO.sol";
 import {IGauge} from "./interfaces/v2/IGauge.sol";
 import {ISolidlyRouter} from "./interfaces/v2/ISolidlyRouter.sol";
 import {IPair} from "./interfaces/v2/IPair.sol";
-import {ISolidlyV2AMO} from "./interfaces/v2/ISolidlyV2AMO.sol";
+import {IV2AMO} from "./interfaces/v2/IV2AMO.sol";
 
-contract SolidlyV2AMO is ISolidlyV2AMO, MasterAMO {
+contract V2AMO is IV2AMO, MasterAMO {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     /* ========== ERRORS ========== */
@@ -36,26 +36,26 @@ contract SolidlyV2AMO is ISolidlyV2AMO, MasterAMO {
     event RewardTokensSet(address[] tokens, bool isWhitelisted);
 
     /* ========== ROLES ========== */
-    /// @inheritdoc ISolidlyV2AMO
+    /// @inheritdoc IV2AMO.sol
     bytes32 public constant override REWARD_COLLECTOR_ROLE = keccak256("REWARD_COLLECTOR_ROLE");
 
     /* ========== VARIABLES ========== */
-    /// @inheritdoc ISolidlyV2AMO
+    /// @inheritdoc IV2AMO.sol
     address public override router;
-    /// @inheritdoc ISolidlyV2AMO
+    /// @inheritdoc IV2AMO.sol
     address public override gauge;
 
-    /// @inheritdoc ISolidlyV2AMO
+    /// @inheritdoc IV2AMO.sol
     address public override rewardVault;
-    /// @inheritdoc ISolidlyV2AMO
+    /// @inheritdoc IV2AMO.sol
     mapping(address => bool) public override whitelistedRewardTokens;
-    /// @inheritdoc ISolidlyV2AMO
+    /// @inheritdoc IV2AMO.sol
     uint256 public override boostSellRatio;
-    /// @inheritdoc ISolidlyV2AMO
+    /// @inheritdoc IV2AMO.sol
     uint256 public override usdBuyRatio;
-    /// @inheritdoc ISolidlyV2AMO
+    /// @inheritdoc IV2AMO.sol
     uint256 public override tokenId;
-    /// @inheritdoc ISolidlyV2AMO
+    /// @inheritdoc IV2AMO.sol
     bool public override useTokenId;
 
     /* ========== FUNCTIONS ========== */
@@ -100,21 +100,21 @@ contract SolidlyV2AMO is ISolidlyV2AMO, MasterAMO {
     }
 
     ////////////////////////// SETTER_ROLE ACTIONS //////////////////////////
-    /// @inheritdoc ISolidlyV2AMO
+    /// @inheritdoc IV2AMO.sol
     function setVault(address rewardVault_) public override onlyRole(SETTER_ROLE) {
         if (rewardVault_ == address(0)) revert ZeroAddress();
         rewardVault = rewardVault_;
         emit VaultSet(rewardVault);
     }
 
-    /// @inheritdoc ISolidlyV2AMO
+    /// @inheritdoc IV2AMO.sol
     function setTokenId(uint256 tokenId_, bool useTokenId_) public override onlyRole(SETTER_ROLE) {
         tokenId = tokenId_;
         useTokenId = useTokenId_;
         emit TokenIdSet(tokenId, useTokenId);
     }
 
-    /// @inheritdoc ISolidlyV2AMO
+    /// @inheritdoc IV2AMO.sol
     function setParams(
         uint256 boostMultiplier_,
         uint24 validRangeWidth_,
@@ -144,7 +144,7 @@ contract SolidlyV2AMO is ISolidlyV2AMO, MasterAMO {
         );
     }
 
-    /// @inheritdoc ISolidlyV2AMO
+    /// @inheritdoc IV2AMO.sol
     function setWhitelistedTokens(address[] memory tokens, bool isWhitelisted) external override onlyRole(SETTER_ROLE) {
         for (uint i = 0; i < tokens.length; i++) {
             whitelistedRewardTokens[tokens[i]] = isWhitelisted;
@@ -316,7 +316,7 @@ contract SolidlyV2AMO is ISolidlyV2AMO, MasterAMO {
     }
 
     ////////////////////////// REWARD_COLLECTOR_ROLE ACTIONS //////////////////////////
-    /// @inheritdoc ISolidlyV2AMO
+    /// @inheritdoc IV2AMO.sol
     function getReward(
         address[] memory tokens,
         bool passTokens

@@ -3,9 +3,9 @@ pragma solidity 0.8.19;
 
 import "./MasterAMO.sol";
 import {ISolidlyV3Pool} from "./interfaces/v3/ISolidlyV3Pool.sol";
-import {ISolidlyV3AMO} from "./interfaces/v3/ISolidlyV3AMO.sol";
+import {IV3AMO} from "./interfaces/v3/IV3AMO.sol";
 
-contract SolidlyV3AMO is ISolidlyV3AMO, MasterAMO {
+contract V3AMO is IV3AMO, MasterAMO {
     /* ========== ERRORS ========== */
     error ExcessiveLiquidityRemoval(uint256 liquidity, uint256 unusedUsdAmount);
 
@@ -33,13 +33,13 @@ contract SolidlyV3AMO is ISolidlyV3AMO, MasterAMO {
     );
 
     /* ========== VARIABLES ========== */
-    /// @inheritdoc ISolidlyV3AMO
+    /// @inheritdoc IV3AMO.sol
     uint24 public override usdUsageRatio;
-    /// @inheritdoc ISolidlyV3AMO
+    /// @inheritdoc IV3AMO.sol
     int24 public override tickLower;
-    /// @inheritdoc ISolidlyV3AMO
+    /// @inheritdoc IV3AMO.sol
     int24 public override tickUpper;
-    /// @inheritdoc ISolidlyV3AMO
+    /// @inheritdoc IV3AMO.sol
     uint160 public override targetSqrtPriceX96;
 
     /* ========== CONSTANTS ========== */
@@ -82,21 +82,21 @@ contract SolidlyV3AMO is ISolidlyV3AMO, MasterAMO {
     }
 
     ////////////////////////// SETTER_ROLE ACTIONS //////////////////////////
-    /// @inheritdoc ISolidlyV3AMO
+    /// @inheritdoc IV3AMO.sol
     function setTickBounds(int24 tickLower_, int24 tickUpper_) public override onlyRole(SETTER_ROLE) {
         tickLower = tickLower_;
         tickUpper = tickUpper_;
         emit TickBoundsSet(tickLower, tickUpper);
     }
 
-    /// @inheritdoc ISolidlyV3AMO
+    /// @inheritdoc IV3AMO.sol
     function setTargetSqrtPriceX96(uint160 targetSqrtPriceX96_) public override onlyRole(SETTER_ROLE) {
         if (targetSqrtPriceX96_ <= MIN_SQRT_RATIO || targetSqrtPriceX96_ >= MAX_SQRT_RATIO) revert InvalidRatioValue();
         targetSqrtPriceX96 = targetSqrtPriceX96_;
         emit TargetSqrtPriceX96Set(targetSqrtPriceX96);
     }
 
-    /// @inheritdoc ISolidlyV3AMO
+    /// @inheritdoc IV3AMO.sol
     function setParams(
         uint256 boostMultiplier_,
         uint24 validRangeWidth_,

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-interface ISolidlyV2AMO {
+interface IV2AMO {
     /* ========== ROLES ========== */
     /// @notice Returns the identifier for the REWARD_COLLECTOR_ROLE
     /// @dev This role allows calling getReward()
